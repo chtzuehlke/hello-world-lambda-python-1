@@ -1,0 +1,60 @@
+service: sls-py-test 
+
+provider:
+  name: aws
+  runtime: python2.7
+  stage: dev
+  region: eu-central-1
+
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "s3:PutObject"
+        - "s3:GetObject"
+      Resource:
+        Fn::Join:
+          - ""
+          - - "arn:aws:s3:::"
+            - "Ref" : "Bucket"
+            - "/*"
+    - Effect: "Allow"
+      Action:
+        - "s3:ListBucket"
+      Resource:
+        Fn::Join:
+          - ""
+          - - "arn:aws:s3:::"
+            - "Ref" : "Bucket"
+
+plugins:
+  - serverless-offline
+
+functions:
+  sample_get:
+    memorySize: 256
+    timeout: 10
+    handler: handler.sample_get
+    events:
+      - httpApi: 
+          method: GET
+          path: /
+    environment:
+      bucket: !Ref Bucket
+
+  sample_post:
+    memorySize: 256
+    timeout: 5
+    handler: handler.sample_post
+    events:
+      - httpApi: 
+          method: POST
+          path: /
+    environment:
+      bucket: !Ref Bucket
+
+resources:
+  Resources:
+    Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:service}-${self:provider.stage}-my-new-bucket
